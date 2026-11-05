@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0d12">
+    <title>GripDesk — Arm Wrestling Tournament Manager</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: '#0b0d12',
+                        panel: '#121620',
+                        line: '#252c39',
+                        muted: '#8b95a7',
+                        accent: '#f04438',
+                        bluegrip: '#3478f6'
+                    },
+                    boxShadow: {
+                        glow: '0 0 35px rgba(240,68,56,.14)'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
+
+    <style>
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #343d4d #121620;
+        }
+
+        body {
+            background: #0b0d12;
+            color: #edf0f5;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            width: 100%;
+            padding: .72rem .85rem;
+            border-radius: .7rem;
+            color: #9aa4b5;
+            font-size: .9rem;
+            text-align: left;
+            transition: .15s;
+        }
+
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: #202633;
+            color: #fff;
+        }
+
+        .nav-btn.active {
+            box-shadow: inset 3px 0 #f04438;
+        }
+
+        .card {
+            background: #121620;
+            border: 1px solid #252c39;
+            border-radius: 1rem;
+        }
+
+        .field {
+            width: 100%;
+            background: #0d1119;
+            border: 1px solid #30394a;
+            border-radius: .65rem;
+            padding: .68rem .8rem;
+            color: #f3f4f6;
+            outline: none;
+        }
+
+        .field:focus {
+            border-color: #f04438;
+            box-shadow: 0 0 0 3px rgba(240, 68, 56, .12);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            border-radius: .65rem;
+            padding: .65rem .9rem;
+            font-size: .875rem;
+            font-weight: 650;
+            transition: .15s;
+        }
+
+        .btn-primary {
+            background: #f04438;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #d9362b;
+        }
+
+        .btn-secondary {
+            background: #202633;
+            color: #e8ebf1;
+            border: 1px solid #30394a;
+        }
+
+        .btn-secondary:hover {
+            background: #2a3342;
+        }
+
+        .btn-danger {
+            background: #3b1d22;
+            color: #ffaaa5;
+            border: 1px solid #713039;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: .2rem .55rem;
+            font-size: .72rem;
+            font-weight: 700;
+        }
+
+        .tag-green {
+            color: #75e0ae;
+            background: #123629;
+        }
+
+        .tag-yellow {
+            color: #f7d477;
+            background: #3b3016;
+        }
+
+        .tag-red {
+            color: #ffaaa5;
+            background: #3b1d22;
+        }
+
+        .tag-blue {
+            color: #9bc1ff;
+            background: #172b4c;
+        }
+
+        .table-wrap {
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 620px;
+        }
+
+        th {
+            color: #8b95a7;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-weight: 700;
+            text-align: left;
+            padding: .85rem .9rem;
+            border-bottom: 1px solid #252c39;
+        }
+
+        td {
+            padding: .85rem .9rem;
+            border-bottom: 1px solid #202633;
+            font-size: .86rem;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, .72);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal {
+            width: min(560px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            background: #121620;
+            border: 1px solid #30394a;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            box-shadow: 0 25px 80px #0009;
+        }
+
+        .hidden-view {
+            display: none !important;
+        }
+
+        .match {
+            min-width: 220px;
+            width: 220px;
+            background: #0d1119;
+            border: 1px solid #30394a;
+            border-radius: .8rem;
+            overflow: hidden;
+        }
+
+        .match-row {
+            display: flex;
+            justify-content: space-between;
+            gap: .5rem;
+            padding: .7rem .75rem;
+            font-size: .82rem;
+            border-bottom: 1px solid #252c39;
+        }
+
+        .match-row:last-child {
+            border-bottom: 0;
+        }
+
+        .match-row.winner {
+            background: #153328;
+            color: #9ce5bd;
+        }
+
+        .match-row.red::before {
+            content: ' ';
+            width: 3px;
+            background: #f04438;
+            border-radius: 5px;
+        }
+
+        .match-row.blue::before {
+            content: ' ';
+            width: 3px;
+            background: #3478f6;
+            border-radius: 5px;
+        }
+
+        .match-row .name {
+            flex: 1;
+        }
+
+        .match-row .side {
+            font-size: .65rem;
+            color: #8b95a7;
+        }
+
+        .toast {
+            position: fixed;
+            right: 1rem;
+            bottom: 1rem;
+            z-index: 80;
+            background: #202633;
+            border: 1px solid #3a4659;
+            padding: .8rem 1rem;
+            border-radius: .8rem;
+            box-shadow: 0 10px 30px #0008;
+        }
+
+        @media print {
+
+            aside,
+            header,
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                color: #111;
+            }
+
+            .card {
+                background: white;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <div class="min-h-screen flex">
+
+        <aside id="sidebar"
+            class="w-64 shrink-0 border-r border-line bg-[#0e121a] p-4 flex flex-col fixed inset-y-0 left-0 z-30 -translate-x-full lg:translate-x-0 transition-transform">
+
+            <div class="flex items-center gap-3 px-2 py-3 mb-7">
+                <div
+                    class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-xl font-black shadow-glow">
+                    G
+                </div>
+                <div>
+                    <div class="font-black tracking-wide text-white">
+                        GRIP<span class="text-accent">DESK</span>
+                    </div>
+                    <div class="text-[10px] uppercase tracking-[.2em] text-muted">
+                        Tournament control
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-[10px] font-bold tracking-[.18em] text-muted uppercase px-3 mb-2">
+                Workspace
+            </div>
+
+            <nav class="space-y-1" id="navigation">
+                <button class="nav-btn active" data-view="dashboard">▦ Dashboard</button>
+                <button class="nav-btn" data-view="athletes">♙ Athletes</button>
+                <button class="nav-btn" data-view="categories">▤ Categories & weigh-in</button>
+                <button class="nav-btn" data-view="brackets">⌘ Brackets</button>
+                <button class="nav-btn" data-view="control">▣ Live table control</button>
+                <button class="nav-btn" data-view="rankings">♜ Results & rankings</button>
+            </nav>
+
+            <div class="text-[10px] font-bold tracking-[.18em] text-muted uppercase px-3 mt-8 mb-2">
+                Manage
+            </div>
+
+            <nav class="space-y-1">
+                <button class="nav-btn" data-view="import">⇧ Import / export</button>
+                <button class="nav-btn" data-view="settings">⚙ Tournament settings</button>
+            </nav>
+
+            <div class="mt-auto card p-3">
+                <div class="flex items-center gap-2 text-sm font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    Local mode
+                </div>
+                <p class="text-xs text-muted mt-1">
+                    Data is saved in this browser. Export backups regularly.
+                </p>
+            </div>
+        </aside>
+
+        <main class="flex-1 min-w-0 lg:ml-64">
+
+            <header
+                class="h-[72px] border-b border-line flex items-center justify-between px-4 sm:px-7 sticky top-0 bg-[#0b0d12]/90 backdrop-blur z-20">
+                <div class="flex items-center gap-3">
+                    <button id="mobileMenu" class="lg:hidden btn btn-secondary !p-2">☰</button>
+                    <div>
+                        <div class="text-xs text-muted">TOURNAMENT WORKSPACE</div>
+                        <div id="topTournament" class="font-bold">Local Championship 2026</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="hidden sm:inline-flex tag tag-green">● Autosaved</span>
+                    <button class="btn btn-secondary" onclick="showView('settings')">
+                        ⚙ <span class="hidden sm:inline">Settings</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-4 sm:p-7 max-w-[1500px] mx-auto">
+
+                <!-- DASHBOARD -->
+                <section id="view-dashboard" class="view space-y-6">
+
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                        <div>
+                            <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Overview</p>
+                            <h1 class="text-3xl font-black mt-1">Tournament dashboard</h1>
+                            <p class="text-muted mt-1 text-sm">Your competition, one control room.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showView('athletes');openAthleteModal()">
+                            ＋ Register athlete
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Registered athletes</div>
+                            <div id="statAthletes" class="text-3xl font-black mt-2">0</div>
+                            <div class="text-xs text-muted mt-1">Unique athlete profiles</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Categories</div>
+                            <div id="statCategories" class="text-3xl font-black mt-2">0</div>
+                            <div class="text-xs text-muted mt-1">Configured divisions</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Active matches</div>
+                            <div id="statMatches" class="text-3xl font-black mt-2">0</div>
+                            <div class="text-xs text-muted mt-1">Ready or in progress</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Tables</div>
+                            <div id="statTables" class="text-3xl font-black mt-2">4</div>
+                            <div class="text-xs text-muted mt-1">Configured competition tables</div>
+                        </div>
+                    </div>
+
+                    <div class="grid xl:grid-cols-[1.4fr_1fr] gap-4">
+                        <div class="card p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h2 class="font-bold text-lg">Competition setup</h2>
+                                    <p class="text-xs text-muted">Quick actions to prepare your event</p>
+                                </div>
+                                <span class="tag tag-blue">Organizer</span>
+                            </div>
+
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <button onclick="showView('athletes')"
+                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    <div class="text-2xl mb-2">♙</div>
+                                    <div class="font-semibold">Manage athletes</div>
+                                    <div class="text-xs text-muted mt-1">Register, edit and assign hands</div>
+                                </button>
+
+                                <button onclick="showView('categories')"
+                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    <div class="text-2xl mb-2">⚖</div>
+                                    <div class="font-semibold">Categories & weigh-in</div>
+                                    <div class="text-xs text-muted mt-1">Set weight limits and verify athletes</div>
+                                </button>
+
+                                <button onclick="showView('brackets')"
+                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    <div class="text-2xl mb-2">⌘</div>
+                                    <div class="font-semibold">Generate brackets</div>
+                                    <div class="text-xs text-muted mt-1">Create competition matchups</div>
+                                </button>
+
+                                <button onclick="showView('control')"
+                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    <div class="text-2xl mb-2">▣</div>
+                                    <div class="font-semibold">Live table control</div>
+                                    <div class="text-xs text-muted mt-1">Call matches and confirm winners</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card p-5">
+                            <div class="flex items-center justify-between">
+                                <h2 class="font-bold text-lg">Tournament status</h2>
+                                <span class="tag tag-yellow" id="setupStatus">Setup</span>
+                            </div>
+                            <div class="space-y-4 mt-5" id="setupChecklist"></div>
+                            <button onclick="showView('settings')" class="btn btn-secondary w-full mt-5">
+                                Configure tournament →
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h2 class="font-bold text-lg">Recent matches</h2>
+                                <p class="text-xs text-muted">Latest recorded results</p>
+                            </div>
+                            <button onclick="showView('rankings')" class="text-sm text-accent">
+                                All results →
+                            </button>
+                        </div>
+                        <div id="recentMatches" class="text-sm text-muted">No match results yet.</div>
+                    </div>
+                </section>
+
+                <!-- ATHLETES -->
+                <section id="view-athletes" class="view hidden-view space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                        <div>
+                            <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">People</p>
+                            <h1 class="text-3xl font-black mt-1">Athletes</h1>
+                            <p class="text-muted text-sm mt-1">
+                                One profile per athlete, with independent left/right registrations.
+                            </p>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary" onclick="showView('import')">⇧ Import list</button>
+                            <button class="btn btn-primary" onclick="openAthleteModal()">＋ Add athlete</button>
+                        </div>
+                    </div>
+
+                    <div class="card p-4 flex flex-col sm:flex-row gap-3">
+                        <input id="athleteSearch" class="field" placeholder="Search athlete, club or ID..."
+                            oninput="renderAthletes()">
+                        <select id="athleteHandFilter" class="field sm:max-w-48" onchange="renderAthletes()">
+                            <option value="">All hands</option>
+                            <option value="left">Left hand</option>
+                            <option value="right">Right hand</option>
+                            <option value="both">Both hands</option>
+                        </select>
+                    </div>
+
+                    <div class="card table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Athlete</th>
+                                    <th>Club / team</th>
+                                    <th>Weight</th>
+                                    <th>Hands</th>
+                                    <th>Weigh-in</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="athleteRows"></tbody>
+                        </table>
+                        <div id="athleteEmpty" class="p-10 text-center text-muted text-sm">
+                            No athletes yet. Add one or import a list.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CATEGORIES -->
+                <section id="view-categories" class="view hidden-view space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                        <div>
+                            <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Divisions</p>
+                            <h1 class="text-3xl font-black mt-1">Categories & weigh-in</h1>
+                            <p class="text-muted text-sm mt-1">Create custom divisions and check athlete eligibility.
+                            </p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openCategoryModal()">＋ Add category</button>
+                    </div>
+
+                    <div class="grid sm:grid-cols-3 gap-3">
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Weigh-in passed</div>
+                            <div class="text-2xl font-black mt-1" id="passedCount">0</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Pending</div>
+                            <div class="text-2xl font-black mt-1" id="pendingCount">0</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Failed</div>
+                            <div class="text-2xl font-black mt-1" id="failedCount">0</div>
+                        </div>
+                    </div>
+
+                    <div id="categoryCards" class="grid md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+
+                    <div class="card p-5">
+                        <h2 class="font-bold text-lg mb-1">Weigh-in station</h2>
+                        <p class="text-xs text-muted mb-4">
+                            Record actual weight. Eligibility is calculated using category limit + configured tolerance.
+                        </p>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Athlete</th>
+                                        <th>Category</th>
+                                        <th>Actual weight</th>
+                                        <th>Allowed max</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="weighRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BRACKETS -->
+                <section id="view-brackets" class="view hidden-view space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                        <div>
+                            <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Competition</p>
+                            <h1 class="text-3xl font-black mt-1">Brackets</h1>
+                            <p class="text-muted text-sm mt-1">Generate and manage category matchups.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateBrackets()">⚡ Generate brackets</button>
+                    </div>
+
+                    <div class="card p-4 flex flex-col sm:flex-row gap-3">
+                        <select id="bracketCategory" class="field" onchange="renderBrackets()">
+                            <option value="">All categories</option>
+                        </select>
+                        <div class="text-xs text-muted self-center">
+                            Current build: single elimination with byes. Double elimination is planned for the next
+                            engine release.
+                        </div>
+                    </div>
+
+                    <div id="bracketContent" class="space-y-5">
+                        <div class="card p-10 text-center text-muted">
+                            Create categories and register athletes, then generate brackets.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- LIVE CONTROL -->
+                <section id="view-control" class="view hidden-view space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                        <div>
+                            <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Arena</p>
+                            <h1 class="text-3xl font-black mt-1">Live table control</h1>
+                            <p class="text-muted text-sm mt-1">
+                                Manage match queues, table assignments and referee decisions.
+                            </p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="showView('settings')">⚙ Configure tables</button>
+                    </div>
+
+                    <div id="tableGrid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+
+                    <div class="card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h2 class="font-bold text-lg">Match queue</h2>
+                                <p class="text-xs text-muted">Next matches ready to be called</p>
+                            </div>
+                            <span class="tag tag-blue" id="queueCount">0 queued</span>
+                        </div>
+                        <div id="queueList" class="space-y-2"></div>
+                    </div>
+                </section>
+
+                <!-- RANKINGS -->
+                <section id="view-rankings" class="view hidden-view space-y-5">
+                    <div>
+                        <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Performance</p>
+                        <h1 class="text-3xl font-black mt-1">Results & rankings</h1>
+                        <p class="text-muted text-sm mt-1">Tournament placements and configurable athlete points.</p>
+                    </div>
+
+                    <div class="grid sm:grid-cols-3 gap-3">
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Completed matches</div>
+                            <div class="text-2xl font-black mt-1" id="completedCount">0</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Athletes with results</div>
+                            <div class="text-2xl font-black mt-1" id="rankedCount">0</div>
+                        </div>
+                        <div class="card p-4">
+                            <div class="text-muted text-xs">Total recorded wins</div>
+                            <div class="text-2xl font-black mt-1" id="winsCount">0</div>
+                        </div>
+                    </div>
+
+                    <div class="card p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <h2 class="font-bold text-lg">Athlete leaderboard</h2>
+                            <span class="text-xs text-muted">Points are configurable in Settings</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Athlete</th>
+                                        <th>Club</th>
+                                        <th>Wins</th>
+                                        <th>Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rankingRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card p-5">
+                        <h2 class="font-bold text-lg mb-3">Match history</h2>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Match</th>
+                                        <th>Category</th>
+                                        <th>Table</th>
+                                        <th>Winner</th>
+                                        <th>Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- IMPORT -->
+                <section id="view-import" class="view hidden-view space-y-5">
+                    <div>
+                        <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Data tools</p>
+                        <h1 class="text-3xl font-black mt-1">Import & export</h1>
+                        <p class="text-muted text-sm mt-1">Bring in participant lists and keep portable backups.</p>
+                    </div>
+
+                    <div class="grid lg:grid-cols-2 gap-4">
+                        <div class="card p-5">
+                            <h2 class="font-bold text-lg">Import participant list</h2>
+                            <p class="text-sm text-muted mt-1 mb-4">
+                                Supported: Excel (.xlsx, .xls), CSV and Word (.docx). The importer expects columns or
+                                lines containing athlete names. Optional columns: club, weight, left, right, category.
+                            </p>
+
+                            <label
+                                class="block border border-dashed border-[#465064] rounded-xl p-7 text-center cursor-pointer hover:border-accent">
+                                <div class="text-3xl mb-2">⇧</div>
+                                <div class="font-semibold">Choose a file</div>
+                                <div class="text-xs text-muted mt-1">.xlsx .xls .csv .docx</div>
+                                <input id="importFile" type="file" accept=".xlsx,.xls,.csv,.docx" class="hidden"
+                                    onchange="importFile(this.files[0])">
+                            </label>
+
+                            <div id="importMessage" class="text-sm text-muted mt-3">No file selected.</div>
+                            <div class="text-xs text-muted mt-4">
+                                Suggested Excel headers: Name, Club, Weight, Left, Right, Category. Boolean hand values:
+                                yes/no, true/false, 1/0.
+                            </div>
+                        </div>
+
+                        <div class="card p-5">
+                            <h2 class="font-bold text-lg">Backup & restore</h2>
+                            <p class="text-sm text-muted mt-1 mb-4">
+                                Save a complete JSON copy of this browser's tournament data. Restore it on this or
+                                another device.
+                            </p>
+
+                            <div class="space-y-2">
+                                <button class="btn btn-primary w-full" onclick="exportBackup()">
+                                    ↓ Download full JSON backup
+                                </button>
+
+                                <label class="btn btn-secondary w-full cursor-pointer">
+                                    ↑ Restore JSON backup
+                                    <input type="file" accept=".json,application/json" class="hidden"
+                                        onchange="restoreBackup(this.files[0])">
+                                </label>
+
+                                <button class="btn btn-secondary w-full" onclick="exportAthletesCSV()">
+                                    ↓ Export athletes to CSV
+                                </button>
+
+                                <button class="btn btn-secondary w-full" onclick="window.print()">
+                                    ▤ Print current page
+                                </button>
+                            </div>
+
+                            <p class="text-xs text-yellow-300 mt-4">
+                                Keep backups outside this browser. Clearing site data can erase local records.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS -->
+                <section id="view-settings" class="view hidden-view space-y-5">
+                    <div>
+                        <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Configuration</p>
+                        <h1 class="text-3xl font-black mt-1">Tournament settings</h1>
+                        <p class="text-muted text-sm mt-1">Set event details, tables, tolerance and scoring.</p>
+                    </div>
+
+                    <div class="card p-5 space-y-4">
+                        <h2 class="font-bold text-lg">Event details</h2>
+
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <label class="text-sm text-muted">
+                                Tournament name
+                                <input id="settingName" class="field mt-1">
+                            </label>
+
+                            <label class="text-sm text-muted">
+                                Event date
+                                <input id="settingDate" type="date" class="field mt-1">
+                            </label>
+
+                            <label class="text-sm text-muted">
+                                Organizer / club
+                                <input id="settingOrganizer" class="field mt-1">
+                            </label>
+
+                            <label class="text-sm text-muted">
+                                Number of tables (1–6)
+                                <select id="settingTables" class="field mt-1">
+                                    <option>1</option>
+                                    <option>2</option>
+                                    <option>3</option>
+                                    <option>4</option>
+                                    <option>5</option>
+                                    <option>6</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <label class="text-sm text-muted">
+                                Default weight allowance (kg)
+                                <input id="settingTolerance" type="number" min="0" step=".1" class="field mt-1">
+                            </label>
+
+                            <label class="text-sm text-muted">
+                                Points for 1st place
+                                <input id="points1" type="number" min="0" class="field mt-1">
+                            </label>
+
+                            <label class="text-sm text-muted">
+                                Points for 2nd place
+                                <input id="points2" type="number" min="0" class="field mt-1">
+                            </label>
+
+                            <label class="text-sm text-muted">
+                                Points for 3rd place
+                                <input id="points3" type="number" min="0" class="field mt-1">
+                            </label>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+                    </div>
+
+                    <div class="card p-5">
+                        <h2 class="font-bold text-lg">Data management</h2>
+                        <p class="text-sm text-muted mt-1 mb-4">
+                            This is a local-only prototype. Reset only if you intentionally want to erase all records.
+                        </p>
+                        <button class="btn btn-danger" onclick="resetAll()">
+                            Reset all local tournament data
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot"></div>
+
+    <script>
+        const STORE_KEY = 'gripdesk_v1';
+
+        const defaults = {
+            settings: {
+                name: 'Local Championship 2026',
+                date: '',
+                organizer: '',
+                tables: 4,
+                tolerance: 0.5,
+                points: {
+                    first: 100,
+                    second: 70,
+                    third: 50
+                }
+            },
+            athletes: [],
+            categories: [],
+            matches: [],
+            results: []
+        };
+
+        let state = loadState();
+
+        function loadState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+
+                return {
+                    ...structuredClone(defaults),
+                    ...saved,
+                    settings: {
+                        ...defaults.settings,
+                        ...(saved.settings || {}),
+                        points: {
+                            ...defaults.settings.points,
+                            ...(saved.settings?.points || {})
+                        }
+                    }
+                };
+            } catch (e) {
+                console.error('Could not load saved data:', e);
+                return structuredClone(defaults);
+            }
+        }
+
+        function save() {
+            localStorage.setItem(STORE_KEY, JSON.stringify(state));
+            updateHeader();
+            renderAll();
+        }
+
+        function uid(prefix) {
+            return prefix + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+        }
+
+        function esc(s = '') {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[c]));
+        }
+
+        function toast(msg) {
+            const el = document.createElement('div');
+            el.className = 'toast text-sm';
+            el.textContent = msg;
+            document.getElementById('toastRoot').append(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        function showView(name) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden-view'));
+
+            const target = document.getElementById('view-' + name);
+            if (target) target.classList.remove('hidden-view');
+
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.view === name);
+            });
+
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            renderAll();
+        }
+
+        document.querySelectorAll('[data-view]').forEach(button => {
+            button.addEventListener('click', () => showView(button.dataset.view));
+        });
+
+        document.getElementById('mobileMenu').onclick = () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        };
+
+        function updateHeader() {
+            document.getElementById('topTournament').textContent = state.settings.name;
+        }
+
+        function athleteName(id) {
+            return state.athletes.find(a => a.id === id)?.name || 'TBD';
+        }
+
+        function categoryName(id) {
+            return state.categories.find(c => c.id === id)?.name || 'Unassigned';
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderAthletes();
+            renderCategories();
+            renderBrackets();
+            renderControl();
+            renderRankings();
+            populateBracketFilter();
+            fillSettings();
+        }
+
+        function renderDashboard() {
+            document.getElementById('statAthletes').textContent = state.athletes.length;
+            document.getElementById('statCategories').textContent = state.categories.length;
+
+            document.getElementById('statMatches').textContent =
+                state.matches.filter(m => !m.winnerId && m.status !== 'paused').length;
+
+            document.getElementById('statTables').textContent = state.settings.tables;
+
+            const checks = [
+                ['Athletes registered', state.athletes.length > 0],
+                ['Categories created', state.categories.length > 0],
+                ['Weigh-in completed', state.athletes.some(a => a.weighStatus === 'passed')],
+                ['Brackets generated', state.matches.length > 0]
+            ];
+
+            document.getElementById('setupChecklist').innerHTML = checks.map(([title, complete]) => `
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-300">${title}</span>
+                <span class="${complete ? 'text-emerald-400' : 'text-muted'}">
+                    ${complete ? '✓ Complete' : '○ Pending'}
+                </span>
+            </div>
+        `).join('');
+
+            document.getElementById('setupStatus').textContent =
+                checks.every(item => item[1]) ? 'Ready' : 'Setup';
+
+            const done = state.matches.filter(m => m.winnerId).slice(-5).reverse();
+
+            document.getElementById('recentMatches').innerHTML = done.length
+                ? done.map(m => `
+                <div class="flex justify-between gap-3 py-2 border-b border-line last:border-0">
+                    <span>
+                        ${esc(athleteName(m.redId))}
+                        <span class="text-muted">vs</span>
+                        ${esc(athleteName(m.blueId))}
+                    </span>
+                    <span class="text-emerald-300">
+                        ${esc(athleteName(m.winnerId))} won
+                    </span>
+                </div>
+            `).join('')
+                : 'No match results yet.';
+        }
+
+        function renderAthletes() {
+            const q = (document.getElementById('athleteSearch')?.value || '').toLowerCase();
+            const hf = document.getElementById('athleteHandFilter')?.value || '';
+
+            const arr = state.athletes.filter(a => {
+                const matchesSearch = !q ||
+                    [a.name, a.club, a.id].join(' ').toLowerCase().includes(q);
+
+                const matchesHand = !hf ||
+                    (hf === 'both' ? a.left && a.right :
+                        hf === 'left' ? a.left && !a.right :
+                            a.right && !a.left);
+
+                return matchesSearch && matchesHand;
+            });
+
+            document.getElementById('athleteRows').innerHTML = arr.map(a => `
+            <tr>
+                <td>
+                    <div class="font-semibold">${esc(a.name)}</div>
+                    <div class="text-xs text-muted">
+                        ${esc(a.id)}${a.gender ? ' · ' + esc(a.gender) : ''}
+                    </div>
+                </td>
+                <td>${esc(a.club || '—')}</td>
+                <td>${a.weight ?? '—'} kg</td>
+                <td>
+                    <span class="tag ${a.left ? 'tag-red' : ''}">${a.left ? 'LEFT' : ''}</span>
+                    <span class="tag ${a.right ? 'tag-blue' : ''}">${a.right ? 'RIGHT' : ''}</span>
+                </td>
+                <td>
+                    <span class="tag ${a.weighStatus === 'passed' ? 'tag-green' :
+                    a.weighStatus === 'failed' ? 'tag-red' : 'tag-yellow'
+                }">${a.weighStatus || 'pending'}</span>
+                </td>
+                <td>
+                    <button class="text-accent mr-3" onclick="openAthleteModal('${a.id}')">Edit</button>
+                    <button class="text-red-300" onclick="deleteAthlete('${a.id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+
+            document.getElementById('athleteEmpty').classList.toggle('hidden-view', arr.length > 0);
+        }
+
+        function openAthleteModal(id = '') {
+            const a = state.athletes.find(x => x.id === id) || {
+                name: '',
+                club: '',
+                weight: '',
+                gender: '',
+                left: true,
+                right: true,
+                categoryId: '',
+                weighStatus: 'pending'
+            };
+
+            modal(`
+            <h2 class="text-xl font-bold mb-4">
+                ${id ? 'Edit athlete' : 'Register athlete'}
+            </h2>
+
+            <form id="athleteForm" class="space-y-3">
+                <label class="block text-sm text-muted">
+                    Full name
+                    <input name="name" required class="field mt-1" value="${esc(a.name)}">
+                </label>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-sm text-muted">
+                        Club / team
+                        <input name="club" class="field mt-1" value="${esc(a.club || '')}">
+                    </label>
+
+                    <label class="text-sm text-muted">
+                        Weight (kg)
+                        <input name="weight" type="number" step=".01" min="0"
+                            class="field mt-1" value="${a.weight ?? ''}">
+                    </label>
+                </div>
+
+                <label class="block text-sm text-muted">
+                    Gender / division
+                    <input name="gender" class="field mt-1"
+                        value="${esc(a.gender || '')}"
+                        placeholder="e.g. Men, Women, Junior">
+                </label>
+
+                <div class="flex gap-5 text-sm">
+                    <label><input type="checkbox" name="left" ${a.left ? 'checked' : ''}> Left hand</label>
+                    <label><input type="checkbox" name="right" ${a.right ? 'checked' : ''}> Right hand</label>
+                </div>
+
+                <label class="block text-sm text-muted">
+                    Category
+                    <select name="categoryId" class="field mt-1">
+                        <option value="">Not assigned</option>
+                        ${state.categories.map(c => `
+                            <option value="${c.id}" ${a.categoryId === c.id ? 'selected' : ''}>
+                                ${esc(c.name)}
+                            </option>
+                        `).join('')}
+                    </select>
+                </label>
+
+                <label class="block text-sm text-muted">
+                    Weigh-in status
+                    <select name="weighStatus" class="field mt-1">
+                        <option value="pending" ${a.weighStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="passed" ${a.weighStatus === 'passed' ? 'selected' : ''}>Passed</option>
+                        <option value="failed" ${a.weighStatus === 'failed' ? 'selected' : ''}>Failed</option>
+                    </select>
+                </label>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn btn-primary">${id ? 'Save changes' : 'Add athlete'}</button>
+                </div>
+            </form>
+        `);
+
+            document.getElementById('athleteForm').onsubmit = e => {
+                e.preventDefault();
+
+                const f = new FormData(e.target);
+
+                const obj = {
+                    id: id || uid('ATH'),
+                    name: f.get('name').trim(),
+                    club: f.get('club').trim(),
+                    weight: f.get('weight') === '' ? null : Number(f.get('weight')),
+                    gender: f.get('gender').trim(),
+                    left: f.has('left'),
+                    right: f.has('right'),
+                    categoryId: f.get('categoryId'),
+                    weighStatus: f.get('weighStatus')
+                };
+
+                if (!obj.left && !obj.right) {
+                    toast('Select at least one competing hand.');
+                    return;
+                }
+
+                if (id) {
+                    Object.assign(state.athletes.find(x => x.id === id), obj);
+                } else {
+                    state.athletes.push(obj);
+                }
+
+                closeModal();
+                save();
+                toast('Athlete saved.');
+            };
+        }
+
+        // FIXED: athlete deletion uses the custom modal.
+        function deleteAthlete(id) {
+            const athlete = state.athletes.find(a => a.id === id);
+            if (!athlete) return;
+
+            askConfirm(
+                'Delete athlete?',
+                `Are you sure you want to delete ${athlete.name}? Existing match records may show TBD.`,
+                () => {
+                    state.athletes = state.athletes.filter(a => a.id !== id);
+                    save();
+                    toast('Athlete deleted.');
+                },
+                'Delete'
+            );
+        }
+
+        function openCategoryModal(id = '') {
+            const c = state.categories.find(x => x.id === id) || {
+                name: '',
+                hand: 'both',
+                maxWeight: '',
+                tolerance: state.settings.tolerance,
+                table: 1,
+                gender: 'Open'
+            };
+
+            modal(`
+            <h2 class="text-xl font-bold mb-4">
+                ${id ? 'Edit category' : 'Create category'}
+            </h2>
+
+            <form id="categoryForm" class="space-y-3">
+                <label class="block text-sm text-muted">
+                    Category name
+                    <input name="name" required class="field mt-1"
+                        value="${esc(c.name)}" placeholder="Men - 75 kg">
+                </label>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-sm text-muted">
+                        Hand
+                        <select name="hand" class="field mt-1">
+                            <option value="left" ${c.hand === 'left' ? 'selected' : ''}>Left</option>
+                            <option value="right" ${c.hand === 'right' ? 'selected' : ''}>Right</option>
+                            <option value="both" ${c.hand === 'both' ? 'selected' : ''}>Both</option>
+                        </select>
+                    </label>
+
+                    <label class="text-sm text-muted">
+                        Division
+                        <input name="gender" class="field mt-1" value="${esc(c.gender || 'Open')}">
+                    </label>
+
+                    <label class="text-sm text-muted">
+                        Maximum weight (kg)
+                        <input name="maxWeight" type="number" step=".01" min="0"
+                            class="field mt-1" value="${c.maxWeight ?? ''}" placeholder="e.g. 75">
+                    </label>
+
+                    <label class="text-sm text-muted">
+                        Allowance (kg)
+                        <input name="tolerance" type="number" step=".1" min="0"
+                            class="field mt-1" value="${c.tolerance}">
+                    </label>
+
+                    <label class="text-sm text-muted col-span-2">
+                        Assigned table
+                        <select name="table" class="field mt-1">
+                            ${Array.from({ length: state.settings.tables }, (_, i) => `
+                                <option value="${i + 1}" ${Number(c.table) === i + 1 ? 'selected' : ''}>
+                                    Table ${i + 1}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn btn-primary">Save category</button>
+                </div>
+            </form>
+        `);
+
+            document.getElementById('categoryForm').onsubmit = e => {
+                e.preventDefault();
+
+                const f = new FormData(e.target);
+
+                const obj = {
+                    id: id || uid('CAT'),
+                    name: f.get('name').trim(),
+                    hand: f.get('hand'),
+                    gender: f.get('gender').trim(),
+                    maxWeight: f.get('maxWeight') === '' ? null : Number(f.get('maxWeight')),
+                    tolerance: Number(f.get('tolerance')),
+                    table: Number(f.get('table'))
+                };
+
+                if (id) {
+                    Object.assign(state.categories.find(x => x.id === id), obj);
+                } else {
+                    state.categories.push(obj);
+                }
+
+                closeModal();
+                save();
+                toast('Category saved.');
+            };
+        }
+
+        function renderCategories() {
+            document.getElementById('categoryCards').innerHTML = state.categories.length
+                ? state.categories.map(c => `
+                <div class="card p-4">
+                    <div class="flex justify-between gap-2">
+                        <div>
+                            <div class="font-bold">${esc(c.name)}</div>
+                            <div class="text-xs text-muted mt-1">
+                                ${esc(c.gender)} · ${c.hand === 'both' ? 'Both hands' : c.hand + ' hand'}
+                            </div>
+                        </div>
+                        <span class="tag tag-blue">Table ${c.table}</span>
+                    </div>
+
+                    <div class="mt-4 text-sm flex justify-between">
+                        <span class="text-muted">Weight limit</span>
+                        <b>${c.maxWeight ?? 'Open'} ${c.maxWeight ? 'kg' : ''}</b>
+                    </div>
+
+                    <div class="text-sm flex justify-between mt-2">
+                        <span class="text-muted">Allowance</span>
+                        <b>${c.tolerance} kg</b>
+                    </div>
+
+                    <div class="text-xs text-muted mt-3">
+                        ${state.athletes.filter(a => a.categoryId === c.id).length} assigned athletes
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button class="text-accent text-sm" onclick="openCategoryModal('${c.id}')">Edit</button>
+                        <button class="text-red-300 text-sm" onclick="deleteCategory('${c.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('')
+                : `
+                <div class="card p-8 text-center text-muted md:col-span-2 xl:col-span-3">
+                    No categories created yet.
+                </div>
+            `;
+
+            const counts = {
+                passed: 0,
+                pending: 0,
+                failed: 0
+            };
+
+            state.athletes.forEach(a => {
+                counts[a.weighStatus || 'pending']++;
+            });
+
+            document.getElementById('passedCount').textContent = counts.passed;
+            document.getElementById('pendingCount').textContent = counts.pending;
+            document.getElementById('failedCount').textContent = counts.failed;
+
+            document.getElementById('weighRows').innerHTML = state.athletes.map(a => {
+                const c = state.categories.find(x => x.id === a.categoryId);
+
+                const max = c?.maxWeight == null
+                    ? null
+                    : c.maxWeight + (c.tolerance ?? state.settings.tolerance);
+
+                return `
+                <tr>
+                    <td>${esc(a.name)}</td>
+                    <td>${esc(c?.name || 'Unassigned')}</td>
+                    <td>${a.weight ?? '—'} kg</td>
+                    <td>${max == null ? 'No limit' : max.toFixed(2) + ' kg'}</td>
+                    <td>
+                        <span class="tag ${a.weighStatus === 'passed' ? 'tag-green' :
+                        a.weighStatus === 'failed' ? 'tag-red' : 'tag-yellow'
+                    }">
+                            ${a.weighStatus || 'pending'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="text-accent" onclick="recordWeight('${a.id}')">
+                            Record weight
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+        }
+
+        // FIXED: category deletion uses the custom modal.
+        function deleteCategory(id) {
+            const category = state.categories.find(c => c.id === id);
+            if (!category) return;
+
+            askConfirm(
+                'Delete category?',
+                `Are you sure you want to delete "${category.name}"? Athletes assigned to it will become unassigned.`,
+                () => {
+                    state.categories = state.categories.filter(c => c.id !== id);
+
+                    state.athletes.forEach(a => {
+                        if (a.categoryId === id) {
+                            a.categoryId = '';
+                        }
+                    });
+
+                    save();
+                    toast('Category deleted.');
+                },
+                'Delete'
+            );
+        }
+
+        // FIXED: weigh-in input uses a custom modal instead of prompt().
+        function recordWeight(id) {
+            const a = state.athletes.find(x => x.id === id);
+            if (!a) return;
+
+            const c = state.categories.find(x => x.id === a.categoryId);
+
+            askInput(
+                'Record weigh-in',
+                `Enter actual weigh-in weight for ${a.name} (kg):`,
+                a.weight ?? '',
+                value => {
+                    const w = Number(value);
+
+                    if (!Number.isFinite(w) || w <= 0) {
+                        toast('Enter a valid weight.');
+                        return;
+                    }
+
+                    a.weight = w;
+
+                    if (!c || c.maxWeight == null) {
+                        a.weighStatus = 'passed';
+                    } else {
+                        a.weighStatus = w <= c.maxWeight + (c.tolerance ?? state.settings.tolerance)
+                            ? 'passed'
+                            : 'failed';
+                    }
+
+                    save();
+                    toast('Weigh-in updated: ' + a.weighStatus);
+                },
+                'Save weight'
+            );
+        }
+
+        function populateBracketFilter() {
+            const el = document.getElementById('bracketCategory');
+            if (!el) return;
+
+            const old = el.value;
+
+            el.innerHTML = '<option value="">All categories</option>' +
+                state.categories.map(c => `
+                <option value="${c.id}">${esc(c.name)}</option>
+            `).join('');
+
+            if (state.categories.some(c => c.id === old)) {
+                el.value = old;
+            }
+        }
+
+        // FIXED: bracket regeneration confirmation uses the custom modal.
+        function generateBrackets() {
+            if (!state.categories.length) {
+                toast('Create at least one category first.');
+                return;
+            }
+
+            const existing = state.matches.some(m =>
+                m.winnerId || m.status === 'live' || m.status === 'paused'
+            );
+
+            const build = () => {
+                state.matches = [];
+
+                state.categories.forEach(c => {
+                    const eligible = state.athletes.filter(a =>
+                        a.categoryId === c.id &&
+                        a.weighStatus === 'passed' &&
+                        (
+                            c.hand === 'both' ||
+                            (c.hand === 'left' && a.left) ||
+                            (c.hand === 'right' && a.right)
+                        )
+                    );
+
+                    if (eligible.length < 2) return;
+
+                    const shuffled = [...eligible].sort(() => Math.random() - .5);
+
+                    let size = 1;
+                    while (size < shuffled.length) size *= 2;
+
+                    let slots = shuffled.slice();
+
+                    while (slots.length < size) {
+                        slots.push(null);
+                    }
+
+                    const rounds = Math.log2(size);
+                    let previous = [];
+
+                    for (let r = 0; r < rounds; r++) {
+                        const count = size / Math.pow(2, r + 1);
+                        const round = [];
+
+                        for (let i = 0; i < count; i++) {
+                            const m = {
+                                id: uid('MAT'),
+                                categoryId: c.id,
+                                round: r + 1,
+                                matchNo: i + 1,
+                                table: c.table,
+                                redId: null,
+                                blueId: null,
+                                winnerId: null,
+                                loserId: null,
+                                status: 'ready',
+                                nextMatchId: null,
+                                createdAt: Date.now()
+                            };
+
+                            if (r === 0) {
+                                m.redId = slots[i * 2]?.id || null;
+                                m.blueId = slots[i * 2 + 1]?.id || null;
+                            } else {
+                                const prev = previous[i * 2];
+                                m.redId = prev?.winnerId || null;
+                                m.blueId = previous[i * 2 + 1]?.winnerId || null;
+                            }
+
+                            round.push(m);
+                            state.matches.push(m);
+                        }
+
+                        if (previous.length) {
+                            previous.forEach((pm, i) => {
+                                pm.nextMatchId = round[Math.floor(i / 2)]?.id || null;
+                            });
+                        }
+
+                        previous = round;
+                    }
+
+                    // First-round byes.
+                    const first = state.matches.filter(m =>
+                        m.categoryId === c.id && m.round === 1
+                    );
+
+                    first.forEach(m => {
+                        if (!m.redId && m.blueId) {
+                            m.winnerId = m.blueId;
+                            m.status = 'bye';
+                        } else if (m.redId && !m.blueId) {
+                            m.winnerId = m.redId;
+                            m.status = 'bye';
+                        }
+                    });
+
+                    // Propagate bye winners.
+                    for (let r = 1; r < rounds; r++) {
+                        const prev = state.matches.filter(m =>
+                            m.categoryId === c.id && m.round === r
+                        );
+
+                        prev.forEach(pm => {
+                            if (pm.winnerId && pm.nextMatchId) {
+                                const nm = state.matches.find(x => x.id === pm.nextMatchId);
+
+                                if (nm) {
+                                    if (!nm.redId) {
+                                        nm.redId = pm.winnerId;
+                                    } else if (!nm.blueId) {
+                                        nm.blueId = pm.winnerId;
+                                    }
+
+                                    if (nm.redId && !nm.blueId) {
+                                        nm.winnerId = nm.redId;
+                                        nm.status = 'bye';
+                                    } else if (nm.blueId && !nm.redId) {
+                                        nm.winnerId = nm.blueId;
+                                        nm.status = 'bye';
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+
+                save();
+                toast('Brackets generated. Review matchups before starting.');
+            };
+
+            if (existing) {
+                askConfirm(
+                    'Regenerate brackets?',
+                    'Some matches have started or finished. Regenerating will erase all current bracket matches. Continue?',
+                    build,
+                    'Regenerate'
+                );
+            } else {
+                build();
+            }
+        }
+
+        function renderBrackets() {
+            const filter = document.getElementById('bracketCategory')?.value || '';
+            const cats = state.categories.filter(c => !filter || c.id === filter);
+            const root = document.getElementById('bracketContent');
+
+            if (!state.matches.length) {
+                root.innerHTML = `
+                <div class="card p-10 text-center text-muted">
+                    No brackets generated yet. Add athletes, verify weigh-in, then generate brackets.
+                </div>
+            `;
+                return;
+            }
+
+            root.innerHTML = cats.map(c => {
+                const ms = state.matches.filter(m => m.categoryId === c.id);
+                if (!ms.length) return '';
+
+                const rounds = [...new Set(ms.map(m => m.round))].sort((a, b) => a - b);
+
+                return `
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="font-bold text-lg">${esc(c.name)}</h2>
+                            <p class="text-xs text-muted">
+                                ${c.hand === 'both' ? 'Both hands' : c.hand + ' hand'} · Table ${c.table} · ${ms.length} matches
+                            </p>
+                        </div>
+                        <span class="tag tag-blue">Single elimination</span>
+                    </div>
+
+                    <div class="flex gap-5 overflow-x-auto pb-3">
+                        ${rounds.map(r => `
+                            <div class="space-y-3">
+                                <div class="text-xs uppercase tracking-widest text-muted font-bold">
+                                    Round ${r}
+                                </div>
+                                ${ms.filter(m => m.round === r).map(m => matchCard(m)).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            }).join('') || `
+            <div class="card p-8 text-center text-muted">
+                No brackets for this category.
+            </div>
+        `;
+        }
+
+        function matchCard(m) {
+            return `
+            <div class="match">
+                <div class="px-3 py-2 text-[10px] text-muted uppercase tracking-wider flex justify-between">
+                    <span>Match ${m.matchNo}</span>
+                    <span>
+                        ${m.status === 'paused' ? 'PAUSED' :
+                    m.status === 'bye' ? 'BYE' :
+                        m.winnerId ? 'FINISHED' : m.status.toUpperCase()}
+                    </span>
+                </div>
+
+                ${matchAthleteRow(m.redId, 'red', m.winnerId === m.redId)}
+                ${matchAthleteRow(m.blueId, 'blue', m.winnerId === m.blueId)}
+
+                <div class="px-2 py-2 flex justify-between items-center text-[10px] text-muted">
+                    <span>Table ${m.table}</span>
+                    <button class="text-accent" onclick="openMatch('${m.id}')">Manage →</button>
+                </div>
+            </div>
+        `;
+        }
+
+        function matchAthleteRow(id, side, winner) {
+            return `
+            <div class="match-row ${side} ${winner ? 'winner' : ''}">
+                <span class="side">${side.toUpperCase()}</span>
+                <span class="name">${esc(id ? athleteName(id) : 'BYE / TBD')}</span>
+                ${winner ? '<span>✓</span>' : ''}
+            </div>
+        `;
+        }
+
+        function renderControl() {
+            const grid = document.getElementById('tableGrid');
+
+            grid.innerHTML = Array.from({ length: state.settings.tables }, (_, i) => {
+                const table = i + 1;
+
+                const m = state.matches.find(x =>
+                    x.table === table && !x.winnerId && x.status !== 'bye'
+                );
+
+                return `
+                <div class="card p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="font-bold">Table ${table}</div>
+                        <span class="tag ${m?.status === 'paused' ? 'tag-red' :
+                        m ? 'tag-green' : 'tag-blue'
+                    }">
+                            ${m ? (m.status === 'paused' ? 'Paused' :
+                        m.status === 'live' ? 'Live' : 'Ready') : 'Available'}
+                        </span>
+                    </div>
+
+                    ${m ? `
+                        <div class="text-sm font-semibold">
+                            ${esc(athleteName(m.redId))}
+                            <span class="text-muted">vs</span>
+                            ${esc(athleteName(m.blueId))}
+                        </div>
+                        <div class="text-xs text-muted mt-1">
+                            ${esc(categoryName(m.categoryId))} · Match ${m.matchNo}
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            <button class="btn btn-primary flex-1" onclick="openMatch('${m.id}')">
+                                Manage match
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="text-sm text-muted py-4">
+                            No active match assigned.
+                        </div>
+                    `}
+                </div>
+            `;
+            }).join('');
+
+            const queue = state.matches
+                .filter(m => !m.winnerId && m.status !== 'paused' && m.status !== 'bye')
+                .sort((a, b) => a.round - b.round);
+
+            document.getElementById('queueCount').textContent = queue.length + ' queued';
+
+            document.getElementById('queueList').innerHTML = queue.length
+                ? queue.map(m => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-[#0d1119] rounded-lg border border-line">
+                    <div>
+                        <div class="text-sm font-semibold">
+                            ${esc(athleteName(m.redId))}
+                            <span class="text-muted">vs</span>
+                            ${esc(athleteName(m.blueId))}
+                        </div>
+                        <div class="text-xs text-muted">
+                            ${esc(categoryName(m.categoryId))} · Round ${m.round} · Table ${m.table}
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button class="btn btn-secondary" onclick="assignTable('${m.id}')">Assign table</button>
+                        <button class="btn btn-primary" onclick="openMatch('${m.id}')">Open</button>
+                    </div>
+                </div>
+            `).join('')
+                : '<div class="text-sm text-muted py-4">No matches in the queue.</div>';
+        }
+
+        // FIXED: table assignment uses a custom input modal.
+        function assignTable(id) {
+            const m = state.matches.find(x => x.id === id);
+            if (!m) return;
+
+            askInput(
+                'Assign table',
+                `Assign ${athleteName(m.redId)} vs ${athleteName(m.blueId)} to a table (1-${state.settings.tables}):`,
+                m.table,
+                value => {
+                    const t = Number(value);
+
+                    if (!Number.isInteger(t) || t < 1 || t > state.settings.tables) {
+                        toast('Invalid table number.');
+                        return;
+                    }
+
+                    m.table = t;
+                    save();
+                    toast(`Match assigned to Table ${t}.`);
+                },
+                'Assign'
+            );
+        }
+
+        function openMatch(id) {
+            const m = state.matches.find(x => x.id === id);
+            if (!m) return;
+
+            const c = categoryName(m.categoryId);
+
+            modal(`
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="text-xs text-accent font-bold uppercase tracking-widest">
+                        Match ${m.matchNo} · Round ${m.round}
+                    </div>
+                    <h2 class="text-xl font-bold mt-1">${esc(c)}</h2>
+                </div>
+                <span class="tag ${m.status === 'paused' ? 'tag-red' : 'tag-blue'}">
+                    ${m.status}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 my-5">
+                <div class="rounded-xl p-4 bg-[#3b1d22] border border-[#713039]">
+                    <div class="text-xs tracking-widest text-red-200">RED · FIRST CALLED</div>
+                    <div class="font-bold text-lg mt-2">${esc(athleteName(m.redId))}</div>
+                </div>
+
+                <div class="rounded-xl p-4 bg-[#172b4c] border border-[#294c80]">
+                    <div class="text-xs tracking-widest text-blue-200">BLUE · SECOND CALLED</div>
+                    <div class="font-bold text-lg mt-2">${esc(athleteName(m.blueId))}</div>
+                </div>
+            </div>
+
+            <div class="text-sm text-muted mb-4">
+                Assigned to Table ${m.table}. Confirm the referee's decision before advancing an athlete.
+            </div>
+
+            <div class="space-y-2">
+                <button class="btn btn-primary w-full"
+                    onclick="confirmWinner('${m.id}','${m.redId}')">
+                    Confirm ${esc(athleteName(m.redId))} as winner
+                </button>
+
+                <button class="btn btn-secondary w-full"
+                    onclick="confirmWinner('${m.id}','${m.blueId}')">
+                    Confirm ${esc(athleteName(m.blueId))} as winner
+                </button>
+
+                <button class="btn btn-danger w-full" onclick="togglePause('${m.id}')">
+                    ${m.status === 'paused' ? 'Resume match' : 'Dispute / pause match'}
+                </button>
+
+                <button class="btn btn-secondary w-full" onclick="closeModal()">Close</button>
+            </div>
+        `);
+        }
+
+        // FIXED: winner confirmation uses the custom modal.
+        function confirmWinner(matchId, winnerId) {
+            const m = state.matches.find(x => x.id === matchId);
+
+            if (!m || !winnerId || winnerId === 'null') {
+                toast('Both athletes must be assigned before recording a winner.');
+                return;
+            }
+
+            const winner = athleteName(winnerId);
+
+            askConfirm(
+                'Confirm match result',
+                `${winner} advances to the next round. Confirm the referee's decision?`,
+                () => {
+                    m.winnerId = winnerId;
+                    m.loserId = winnerId === m.redId ? m.blueId : m.redId;
+                    m.status = 'completed';
+                    m.completedAt = Date.now();
+
+                    state.results.push({
+                        id: uid('RES'),
+                        matchId: m.id,
+                        categoryId: m.categoryId,
+                        winnerId: m.winnerId,
+                        loserId: m.loserId,
+                        table: m.table,
+                        date: new Date().toISOString()
+                    });
+
+                    if (m.nextMatchId) {
+                        const next = state.matches.find(x => x.id === m.nextMatchId);
+
+                        if (next) {
+                            if (!next.redId) {
+                                next.redId = winnerId;
+                            } else if (!next.blueId) {
+                                next.blueId = winnerId;
+                            }
+                        }
+                    }
+
+                    closeModal();
+                    save();
+                    toast(`${winner} advances!`);
+                },
+                'Confirm winner'
+            );
+        }
+
+        function togglePause(id) {
+            const m = state.matches.find(x => x.id === id);
+            if (!m) return;
+
+            m.status = m.status === 'paused' ? 'ready' : 'paused';
+
+            closeModal();
+            save();
+
+            toast(m.status === 'paused' ? 'Match paused.' : 'Match resumed.');
+        }
+
+        function renderRankings() {
+            const wins = {};
+
+            state.results.forEach(r => {
+                wins[r.winnerId] = (wins[r.winnerId] || 0) + 1;
+            });
+
+            const rows = state.athletes.map(a => ({
+                a,
+                w: wins[a.id] || 0,
+                points: (wins[a.id] || 0) * 10
+            })).sort((x, y) => y.points - x.points);
+
+            document.getElementById('completedCount').textContent = state.results.length;
+
+            document.getElementById('rankedCount').textContent =
+                rows.filter(x => x.w > 0).length;
+
+            document.getElementById('winsCount').textContent = state.results.length;
+
+            document.getElementById('rankingRows').innerHTML = rows.map((x, i) => `
+            <tr>
+                <td class="font-bold">${i + 1}</td>
+                <td class="font-semibold">${esc(x.a.name)}</td>
+                <td>${esc(x.a.club || '—')}</td>
+                <td>${x.w}</td>
+                <td class="text-accent font-bold">${x.points}</td>
+            </tr>
+        `).join('') || `
+            <tr>
+                <td colspan="5" class="text-muted text-center">No athletes registered.</td>
+            </tr>
+        `;
+
+            document.getElementById('historyRows').innerHTML =
+                state.results.slice().reverse().map(r => `
+                <tr>
+                    <td>${esc(r.matchId)}</td>
+                    <td>${esc(categoryName(r.categoryId))}</td>
+                    <td>Table ${r.table}</td>
+                    <td class="font-semibold">${esc(athleteName(r.winnerId))}</td>
+                    <td><span class="tag tag-green">Completed</span></td>
+                </tr>
+            `).join('') || `
+                <tr>
+                    <td colspan="5" class="text-muted text-center">No results recorded yet.</td>
+                </tr>
+            `;
+        }
+
+        function fillSettings() {
+            const s = state.settings;
+
+            [
+                ['settingName', s.name],
+                ['settingDate', s.date],
+                ['settingOrganizer', s.organizer],
+                ['settingTables', s.tables],
+                ['settingTolerance', s.tolerance],
+                ['points1', s.points.first],
+                ['points2', s.points.second],
+                ['points3', s.points.third]
+            ].forEach(([id, value]) => {
+                const e = document.getElementById(id);
+
+                if (e && document.activeElement !== e) {
+                    e.value = value ?? '';
+                }
+            });
+        }
+
+        function saveSettings() {
+            const s = state.settings;
+
+            s.name = document.getElementById('settingName').value.trim() ||
+                'Arm Wrestling Tournament';
+
+            s.date = document.getElementById('settingDate').value;
+            s.organizer = document.getElementById('settingOrganizer').value.trim();
+            s.tables = Number(document.getElementById('settingTables').value);
+
+            s.tolerance = Math.max(
+                0,
+                Number(document.getElementById('settingTolerance').value) || 0
+            );
+
+            s.points = {
+                first: Number(document.getElementById('points1').value) || 0,
+                second: Number(document.getElementById('points2').value) || 0,
+                third: Number(document.getElementById('points3').value) || 0
+            };
+
+            state.categories.forEach(c => {
+                if (c.table > s.tables) c.table = s.tables;
+            });
+
+            state.matches.forEach(m => {
+                if (m.table > s.tables) m.table = s.tables;
+            });
+
+            save();
+            toast('Tournament settings saved.');
+        }
+
+        // MODAL SYSTEM
+        function modal(content) {
+            document.getElementById('modalRoot').innerHTML = `
+            <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+                <div class="modal">${content}</div>
+            </div>
+        `;
+        }
+
+        function closeModal() {
+            document.getElementById('modalRoot').innerHTML = '';
+        }
+
+        // NEW: reusable custom confirmation modal.
+        function askConfirm(title, message, onConfirm, confirmText = 'Confirm') {
+            modal(`
+            <h2 class="text-xl font-bold">${esc(title)}</h2>
+
+            <p class="text-gray-400 mt-3">${esc(message)}</p>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                    Cancel
+                </button>
+
+                <button type="button" class="btn btn-danger" id="confirmAction">
+                    ${esc(confirmText)}
+                </button>
+            </div>
+        `);
+
+            document.getElementById('confirmAction').addEventListener('click', () => {
+                closeModal();
+                onConfirm();
+            });
+        }
+
+        // NEW: reusable custom input modal.
+        function askInput(title, message, defaultValue, onSubmit, submitText = 'Save') {
+            modal(`
+            <h2 class="text-xl font-bold">${esc(title)}</h2>
+
+            <p class="text-gray-400 mt-3">${esc(message)}</p>
+
+            <form id="customInputForm" class="mt-4 space-y-4">
+                <input
+                    id="customInputValue"
+                    class="field"
+                    type="number"
+                    step="any"
+                    value="${esc(defaultValue)}"
+                    required
+                >
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        ${esc(submitText)}
+                    </button>
+                </div>
+            </form>
+        `);
+
+            const input = document.getElementById('customInputValue');
+            input.focus();
+            input.select();
+
+            document.getElementById('customInputForm').addEventListener('submit', e => {
+                e.preventDefault();
+
+                const value = input.value;
+
+                closeModal();
+                onSubmit(value);
+            });
+        }
+
+        async function importFile(file) {
+            if (!file) return;
+
+            const msg = document.getElementById('importMessage');
+            msg.textContent = 'Reading ' + file.name + '...';
+
+            try {
+                let rows = [];
+
+                if (file.name.toLowerCase().endsWith('.docx')) {
+                    const buf = await file.arrayBuffer();
+
+                    const result = await mammoth.extractRawText({
+                        arrayBuffer: buf
+                    });
+
+                    rows = result.value
+                        .split(/\r?\n/)
+                        .map(x => x.trim())
+                        .filter(Boolean)
+                        .map(name => ({ Name: name }));
+                } else {
+                    const buf = await file.arrayBuffer();
+                    const wb = XLSX.read(buf, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+
+                    rows = XLSX.utils.sheet_to_json(sheet, {
+                        defval: ''
+                    });
+                }
+
+                let added = 0;
+
+                rows.forEach(r => {
+                    const get = (...keys) => {
+                        const k = Object.keys(r).find(x =>
+                            keys.includes(x.toLowerCase().trim())
+                        );
+
+                        return k ? r[k] : '';
+                    };
+
+                    const name = String(
+                        get('name', 'full name', 'athlete', 'participant')
+                    ).trim();
+
+                    if (!name) return;
+
+                    const left = String(get('left', 'left hand')).toLowerCase();
+                    const right = String(get('right', 'right hand')).toLowerCase();
+
+                    const a = {
+                        id: uid('ATH'),
+                        name,
+                        club: String(get('club', 'team')).trim(),
+                        weight: Number(get('weight', 'actual weight')) || null,
+                        gender: String(get('gender', 'division')).trim(),
+
+                        left: left
+                            ? ['yes', 'true', '1', 'y'].includes(left)
+                            : true,
+
+                        right: right
+                            ? ['yes', 'true', '1', 'y'].includes(right)
+                            : true,
+
+                        categoryId: '',
+                        weighStatus: 'pending'
+                    };
+
+                    const cat = String(
+                        get('category', 'category name')
+                    ).trim().toLowerCase();
+
+                    const found = state.categories.find(c =>
+                        c.name.toLowerCase() === cat
+                    );
+
+                    if (found) {
+                        a.categoryId = found.id;
+                    }
+
+                    state.athletes.push(a);
+                    added++;
+                });
+
+                save();
+
+                msg.innerHTML = `
+                <span class="text-emerald-300">
+                    ✓ Imported ${added} athlete(s) from ${esc(file.name)}.
+                </span>
+            `;
+
+                toast('Import complete.');
+
+            } catch (err) {
+                console.error(err);
+
+                msg.textContent =
+                    'Could not read this file. Check its format and column headers.';
+            }
+        }
+
+        function download(name, content, type) {
+            const blob = new Blob([content], { type });
+            const a = document.createElement('a');
+
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            a.click();
+
+            URL.revokeObjectURL(a.href);
+        }
+
+        function exportBackup() {
+            download(
+                'gripdesk-backup.json',
+                JSON.stringify(state, null, 2),
+                'application/json'
+            );
+        }
+
+        // FIXED: backup restoration uses custom confirmation.
+        function restoreBackup(file) {
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                let data;
+
+                try {
+                    data = JSON.parse(reader.result);
+
+                    if (!data.athletes || !data.categories || !data.settings) {
+                        throw Error('Invalid backup');
+                    }
+                } catch (e) {
+                    toast('Invalid backup file.');
+                    return;
+                }
+
+                askConfirm(
+                    'Restore backup?',
+                    'Replace current local tournament data with this backup?',
+                    () => {
+                        state = {
+                            ...structuredClone(defaults),
+                            ...data,
+                            settings: {
+                                ...defaults.settings,
+                                ...(data.settings || {}),
+                                points: {
+                                    ...defaults.settings.points,
+                                    ...(data.settings?.points || {})
+                                }
+                            }
+                        };
+
+                        save();
+                        toast('Backup restored.');
+                    },
+                    'Restore'
+                );
+            };
+
+            reader.readAsText(file);
+        }
+
+        function exportAthletesCSV() {
+            const rows = [
+                ['Name', 'Club', 'Weight', 'Left', 'Right', 'Category', 'Weigh-in'],
+                ...state.athletes.map(a => [
+                    a.name,
+                    a.club,
+                    a.weight,
+                    a.left,
+                    a.right,
+                    categoryName(a.categoryId),
+                    a.weighStatus
+                ])
+            ];
+
+            const csv = rows.map(r =>
+                r.map(x =>
+                    '"' + String(x ?? '').replace(/"/g, '""') + '"'
+                ).join(',')
+            ).join('\n');
+
+            download('gripdesk-athletes.csv', csv, 'text/csv');
+        }
+
+        // FIXED: reset uses the custom confirmation modal.
+        function resetAll() {
+            askConfirm(
+                'Reset all tournament data?',
+                'This permanently deletes all GripDesk data saved in this browser. Export a backup first if you need to keep your records.',
+                () => {
+                    state = structuredClone(defaults);
+                    save();
+                    toast('Local data reset.');
+                },
+                'Reset everything'
+            );
+        }
+
+        updateHeader();
+        renderAll();
+    </script>
+
+</body>
+
+</html>
