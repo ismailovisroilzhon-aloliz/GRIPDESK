@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="UTF-8">
@@ -48,21 +48,24 @@
             gap: .75rem;
             width: 100%;
             padding: .72rem .85rem;
-            border-radius: .7rem;
-            color: #9aa4b5;
+            border-radius: 0;
+            color: #cbd5e1;
             font-size: .9rem;
             text-align: left;
             transition: .15s;
         }
 
-        .nav-btn:hover,
-        .nav-btn.active {
-            background: #202633;
-            color: #fff;
+        .nav-btn:hover {
+            background: rgba(30, 41, 59, .55);
+            color: #f8fafc;
         }
 
         .nav-btn.active {
-            box-shadow: inset 3px 0 #f04438;
+            background: rgba(30, 41, 59, .6);
+            color: #fff;
+            border-left: 2px solid #f59e0b;
+            padding-left: calc(.85rem - 2px);
+            box-shadow: none;
         }
 
         .card {
@@ -357,8 +360,18 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <span class="hidden sm:inline-flex tag tag-green">● Autosaved</span>
-                    <button class="btn btn-secondary" onclick="showView('settings')">
+                    <select id="languageSelect"
+                        class="!h-9 !w-auto !rounded-md !border !border-slate-800 !bg-slate-900/80 !px-2 !py-0 text-xs text-slate-200"
+                        aria-label="Language" onchange="setLanguage(this.value)">
+                        <option value="ru" selected>Русский</option>
+                        <option value="en">English</option>
+                    </select>
+                    <span
+                        class="hidden sm:inline-flex h-9 items-center rounded-md border border-slate-800 bg-slate-900/80 px-3 text-xs font-medium text-slate-300">●
+                        Autosaved</span>
+                    <button
+                        class="btn btn-secondary !h-9 !rounded-md !border-slate-800 !bg-slate-900/80 !px-3 !py-0 text-xs font-semibold tracking-wide"
+                        onclick="showView('settings')">
                         ⚙ <span class="hidden sm:inline">Settings</span>
                     </button>
                 </div>
@@ -371,96 +384,105 @@
 
                     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div>
-                            <p class="text-accent text-xs font-bold tracking-[.2em] uppercase">Overview</p>
-                            <h1 class="text-3xl font-black mt-1">Tournament dashboard</h1>
-                            <p class="text-muted mt-1 text-sm">Your competition, one control room.</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Overview</p>
+                            <h1 class="text-3xl font-black mt-1 text-slate-50">Tournament dashboard</h1>
+                            <p class="mt-1 text-sm text-slate-300">Your competition, one control room.</p>
                         </div>
-                        <button class="btn btn-primary" onclick="showView('athletes');openAthleteModal()">
+                        <button
+                            class="btn btn-primary !rounded-md !border !border-red-400/30 font-semibold tracking-wide"
+                            onclick="showView('athletes');openAthleteModal()">
                             ＋ Register athlete
                         </button>
                     </div>
 
                     <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
-                        <div class="card p-4">
-                            <div class="text-muted text-xs">Registered athletes</div>
-                            <div id="statAthletes" class="text-3xl font-black mt-2">0</div>
-                            <div class="text-xs text-muted mt-1">Unique athlete profiles</div>
+                        <div class="rounded-md border border-slate-800/80 bg-[#111827] px-4 py-3">
+                            <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Registered athletes
+                            </div>
+                            <div id="statAthletes"
+                                class="mt-2 text-3xl font-bold tracking-tight tabular-nums text-white">0</div>
+                            <div class="mt-1 text-xs text-slate-400">Unique athlete profiles</div>
                         </div>
-                        <div class="card p-4">
-                            <div class="text-muted text-xs">Categories</div>
-                            <div id="statCategories" class="text-3xl font-black mt-2">0</div>
-                            <div class="text-xs text-muted mt-1">Configured divisions</div>
+                        <div class="rounded-md border border-slate-800/80 bg-[#111827] px-4 py-3">
+                            <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Categories</div>
+                            <div id="statCategories"
+                                class="mt-2 text-3xl font-bold tracking-tight tabular-nums text-white">0</div>
+                            <div class="mt-1 text-xs text-slate-400">Configured divisions</div>
                         </div>
-                        <div class="card p-4">
-                            <div class="text-muted text-xs">Active matches</div>
-                            <div id="statMatches" class="text-3xl font-black mt-2">0</div>
-                            <div class="text-xs text-muted mt-1">Ready or in progress</div>
+                        <div class="rounded-md border border-slate-800/80 bg-[#111827] px-4 py-3">
+                            <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Active matches
+                            </div>
+                            <div id="statMatches"
+                                class="mt-2 text-3xl font-bold tracking-tight tabular-nums text-white">0</div>
+                            <div class="mt-1 text-xs text-slate-400">Ready or in progress</div>
                         </div>
-                        <div class="card p-4">
-                            <div class="text-muted text-xs">Tables</div>
-                            <div id="statTables" class="text-3xl font-black mt-2">4</div>
-                            <div class="text-xs text-muted mt-1">Configured competition tables</div>
+                        <div class="rounded-md border border-slate-800/80 bg-[#111827] px-4 py-3">
+                            <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Tables</div>
+                            <div id="statTables" class="mt-2 text-3xl font-bold tracking-tight tabular-nums text-white">
+                                4</div>
+                            <div class="mt-1 text-xs text-slate-400">Configured competition tables</div>
                         </div>
                     </div>
 
                     <div class="grid xl:grid-cols-[1.4fr_1fr] gap-4">
-                        <div class="card p-5">
+                        <div class="rounded-md border border-slate-800 bg-[#111827] p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <h2 class="font-bold text-lg">Competition setup</h2>
-                                    <p class="text-xs text-muted">Quick actions to prepare your event</p>
+                                    <h2 class="text-lg font-bold text-slate-50">Competition setup</h2>
+                                    <p class="text-xs text-slate-300">Quick actions to prepare your event</p>
                                 </div>
-                                <span class="tag tag-blue">Organizer</span>
+                                <span class="tag tag-blue !rounded-md">Organizer</span>
                             </div>
 
                             <div class="grid sm:grid-cols-2 gap-3">
                                 <button onclick="showView('athletes')"
-                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    class="text-left rounded-md border border-slate-800/60 bg-slate-900/90 p-4 transition-colors hover:border-slate-700 hover:bg-slate-800/90">
                                     <div class="text-2xl mb-2">♙</div>
-                                    <div class="font-semibold">Manage athletes</div>
-                                    <div class="text-xs text-muted mt-1">Register, edit and assign hands</div>
+                                    <div class="font-semibold text-slate-100">Manage athletes</div>
+                                    <div class="mt-1 text-xs text-slate-300">Register, edit and assign hands</div>
                                 </button>
 
                                 <button onclick="showView('categories')"
-                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    class="text-left rounded-md border border-slate-800/60 bg-slate-900/90 p-4 transition-colors hover:border-slate-700 hover:bg-slate-800/90">
                                     <div class="text-2xl mb-2">⚖</div>
-                                    <div class="font-semibold">Categories & weigh-in</div>
-                                    <div class="text-xs text-muted mt-1">Set weight limits and verify athletes</div>
+                                    <div class="font-semibold text-slate-100">Categories & weigh-in</div>
+                                    <div class="mt-1 text-xs text-slate-300">Set weight limits and verify athletes</div>
                                 </button>
 
                                 <button onclick="showView('brackets')"
-                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    class="text-left rounded-md border border-slate-800/60 bg-slate-900/90 p-4 transition-colors hover:border-slate-700 hover:bg-slate-800/90">
                                     <div class="text-2xl mb-2">⌘</div>
-                                    <div class="font-semibold">Generate brackets</div>
-                                    <div class="text-xs text-muted mt-1">Create competition matchups</div>
+                                    <div class="font-semibold text-slate-100">Generate brackets</div>
+                                    <div class="mt-1 text-xs text-slate-300">Create competition matchups</div>
                                 </button>
 
                                 <button onclick="showView('control')"
-                                    class="text-left p-4 rounded-xl bg-[#0d1119] border border-line hover:border-accent">
+                                    class="text-left rounded-md border border-slate-800/60 bg-slate-900/90 p-4 transition-colors hover:border-slate-700 hover:bg-slate-800/90">
                                     <div class="text-2xl mb-2">▣</div>
-                                    <div class="font-semibold">Live table control</div>
-                                    <div class="text-xs text-muted mt-1">Call matches and confirm winners</div>
+                                    <div class="font-semibold text-slate-100">Live table control</div>
+                                    <div class="mt-1 text-xs text-slate-300">Call matches and confirm winners</div>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="card p-5">
+                        <div class="rounded-md border border-slate-800 bg-[#111827] p-6">
                             <div class="flex items-center justify-between">
-                                <h2 class="font-bold text-lg">Tournament status</h2>
-                                <span class="tag tag-yellow" id="setupStatus">Setup</span>
+                                <h2 class="text-lg font-bold text-slate-50">Tournament status</h2>
+                                <span class="tag tag-yellow !rounded-md" id="setupStatus">Setup</span>
                             </div>
-                            <div class="space-y-4 mt-5" id="setupChecklist"></div>
-                            <button onclick="showView('settings')" class="btn btn-secondary w-full mt-5">
+                            <div class="mt-5 divide-y divide-slate-800/70" id="setupChecklist"></div>
+                            <button onclick="showView('settings')"
+                                class="btn btn-secondary mt-5 w-full !rounded-md !border-slate-700 !bg-slate-800 !font-medium !text-slate-100 hover:!bg-slate-700">
                                 Configure tournament →
                             </button>
                         </div>
                     </div>
 
-                    <div class="card p-5">
+                    <div class="rounded-md border border-slate-800 bg-[#111827] p-6">
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <h2 class="font-bold text-lg">Recent matches</h2>
-                                <p class="text-xs text-muted">Latest recorded results</p>
+                                <h2 class="text-lg font-bold text-slate-50">Recent matches</h2>
+                                <p class="text-xs text-slate-300">Latest recorded results</p>
                             </div>
                             <button onclick="showView('rankings')" class="text-sm text-accent">
                                 All results →
@@ -837,6 +859,184 @@
     <div id="toastRoot"></div>
 
     <script>
+
+        // Language preference: Russian is the default; English remains available.
+        const LANGUAGE_KEY = 'gripdesk_language';
+        let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || 'ru';
+
+        const translations = {
+            'Tournament control': 'Управление турниром', 'Workspace': 'Рабочая область',
+            'Dashboard': 'Панель управления', 'Athletes': 'Участники',
+            'Categories & weigh-in': 'Категории и взвешивание', 'Brackets': 'Сетка турнира',
+            'Live table control': 'Управление столами', 'Results & rankings': 'Результаты и рейтинг',
+            'Manage': 'Управление', 'Import / export': 'Импорт / экспорт',
+            'Tournament settings': 'Настройки турнира', 'Local mode': 'Локальный режим',
+            'Data is saved in this browser. Export backups regularly.': 'Данные сохраняются в этом браузере. Регулярно создавайте резервные копии.',
+            'TOURNAMENT WORKSPACE': 'РАБОЧАЯ ОБЛАСТЬ ТУРНИРА', '● Autosaved': '● Сохранено', 'Settings': 'Настройки',
+            'Overview': 'Обзор', 'Tournament dashboard': 'Панель управления турниром',
+            'Your competition, one control room.': 'Весь турнир — в одной панели управления.',
+            '＋ Register athlete': '＋ Зарегистрировать участника', 'Registered athletes': 'Зарегистрированные участники',
+            'Unique athlete profiles': 'Уникальные профили участников', 'Categories': 'Категории',
+            'Configured divisions': 'Настроенные дивизионы', 'Active matches': 'Активные поединки',
+            'Ready or in progress': 'Готовы или проходят сейчас', 'Tables': 'Столы',
+            'Configured competition tables': 'Настроенные соревновательные столы',
+            'Competition setup': 'Подготовка соревнования', 'Quick actions to prepare your event': 'Быстрые действия для подготовки турнира',
+            'Organizer': 'Организатор', 'Manage athletes': 'Управление участниками',
+            'Register, edit and assign hands': 'Регистрация, редактирование и выбор рук',
+            'Set weight limits and verify athletes': 'Установка лимитов веса и проверка участников',
+            'Generate brackets': 'Создать сетку', 'Create competition matchups': 'Сформировать пары для поединков',
+            'Call matches and confirm winners': 'Вызывать участников и подтверждать победителей',
+            'Tournament status': 'Статус турнира', 'Setup': 'Настройка', 'Configure tournament →': 'Настроить турнир →',
+            'Recent matches': 'Последние поединки', 'Latest recorded results': 'Последние записанные результаты',
+            'All results →': 'Все результаты →', 'No match results yet.': 'Пока нет результатов поединков.',
+            'People': 'Участники', 'One profile per athlete, with independent left/right registrations.': 'Один профиль на участника с отдельной регистрацией левой и правой руки.',
+            '⇧ Import list': '⇧ Импортировать список', '＋ Add athlete': '＋ Добавить участника',
+            'Search athlete, club or ID...': 'Поиск участника, клуба или ID...', 'All hands': 'Обе руки',
+            'Left hand': 'Левая рука', 'Right hand': 'Правая рука', 'Both hands': 'Обе руки',
+            'Athlete': 'Участник', 'Club / team': 'Клуб / команда', 'Weight': 'Вес', 'Hands': 'Руки',
+            'Weigh-in': 'Взвешивание', 'Actions': 'Действия',
+            'No athletes yet. Add one or import a list.': 'Участников пока нет. Добавьте участника или импортируйте список.',
+            'Divisions': 'Дивизионы', 'Create custom divisions and check athlete eligibility.': 'Создавайте дивизионы и проверяйте допуск участников.',
+            '＋ Add category': '＋ Добавить категорию', 'Weigh-in passed': 'Взвешивание пройдено',
+            'Pending': 'Ожидает', 'Failed': 'Не пройдено', 'Weigh-in station': 'Зона взвешивания',
+            'Record actual weight. Eligibility is calculated using category limit + configured tolerance.': 'Укажите фактический вес. Допуск рассчитывается по лимиту категории и установленному допуску.',
+            'Category': 'Категория', 'Actual weight': 'Фактический вес', 'Allowed max': 'Допустимый максимум',
+            'Status': 'Статус', 'Action': 'Действие', 'Competition': 'Соревнование',
+            'Generate and manage category matchups.': 'Создавайте и управляйте парами по категориям.',
+            '⚡ Generate brackets': '⚡ Создать сетку', 'All categories': 'Все категории',
+            'Current build: single elimination with byes. Double elimination is planned for the next engine release.': 'Текущая версия: олимпийская система с пропусками первого раунда. Система с выбыванием после двух поражений планируется в следующем обновлении.',
+            'Create categories and register athletes, then generate brackets.': 'Сначала создайте категории и зарегистрируйте участников, затем сформируйте сетку.',
+            'Arena': 'Арена', 'Manage match queues, table assignments and referee decisions.': 'Управляйте очередью поединков, назначением столов и решениями судей.',
+            '⚙ Configure tables': '⚙ Настроить столы', 'Match queue': 'Очередь поединков',
+            'Next matches ready to be called': 'Следующие поединки готовы к вызову', 'Performance': 'Статистика',
+            'Tournament placements and configurable athlete points.': 'Места участников и настраиваемые очки.',
+            'Completed matches': 'Завершённые поединки', 'Athletes with results': 'Участники с результатами',
+            'Total recorded wins': 'Всего зафиксировано побед', 'Athlete leaderboard': 'Рейтинг участников',
+            'Points are configurable in Settings': 'Количество очков настраивается в параметрах', 'Rank': 'Место',
+            'Club': 'Клуб', 'Wins': 'Победы', 'Points': 'Очки', 'Match history': 'История поединков',
+            'Match': 'Поединок', 'Table': 'Стол', 'Winner': 'Победитель', 'Result': 'Результат',
+            'Data tools': 'Работа с данными', 'Import & export': 'Импорт и экспорт',
+            'Bring in participant lists and keep portable backups.': 'Импортируйте списки участников и сохраняйте резервные копии.',
+            'Import participant list': 'Импорт списка участников',
+            'Supported: Excel (.xlsx, .xls), CSV and Word (.docx). The importer expects columns or lines containing athlete names. Optional columns: club, weight, left, right, category.': 'Поддерживаются Excel (.xlsx, .xls), CSV и Word (.docx). Импортируемый файл должен содержать имена участников в столбцах или строках. Дополнительные столбцы: клуб, вес, левая рука, правая рука, категория.',
+            'Choose a file': 'Выбрать файл', 'No file selected.': 'Файл не выбран.',
+            'Suggested Excel headers: Name, Club, Weight, Left, Right, Category. Boolean hand values: yes/no, true/false, 1/0.': 'Рекомендуемые заголовки Excel: Name, Club, Weight, Left, Right, Category. Значения для рук: yes/no, true/false, 1/0.',
+            'Backup & restore': 'Резервное копирование и восстановление',
+            "Save a complete JSON copy of this browser's tournament data. Restore it on this or another device.": 'Сохраните полную копию данных турнира в формате JSON. Её можно восстановить на этом или другом устройстве.',
+            '↓ Download full JSON backup': '↓ Скачать полную резервную копию JSON',
+            '↑ Restore JSON backup': '↑ Восстановить резервную копию JSON', '↓ Export athletes to CSV': '↓ Экспортировать участников в CSV',
+            '▤ Print current page': '▤ Распечатать текущую страницу',
+            'Keep backups outside this browser. Clearing site data can erase local records.': 'Храните резервные копии вне этого браузера. Очистка данных сайта может удалить локальные записи.',
+            'Configuration': 'Конфигурация', 'Set event details, tables, tolerance and scoring.': 'Укажите данные турнира, количество столов, допуск по весу и систему очков.',
+            'Event details': 'Информация о турнире', 'Tournament name': 'Название турнира', 'Event date': 'Дата турнира',
+            'Organizer / club': 'Организатор / клуб', 'Number of tables (1–6)': 'Количество столов (1–6)',
+            'Default weight allowance (kg)': 'Допуск по весу по умолчанию (кг)', 'Points for 1st place': 'Очки за 1-е место',
+            'Points for 2nd place': 'Очки за 2-е место', 'Points for 3rd place': 'Очки за 3-е место',
+            'Save settings': 'Сохранить настройки', 'Data management': 'Управление данными',
+            'This is a local-only prototype. Reset only if you intentionally want to erase all records.': 'Это локальная версия приложения. Сбрасывайте данные, только если действительно хотите удалить все записи.',
+            'Reset all local tournament data': 'Сбросить все локальные данные турнира',
+            'Edit': 'Изменить', 'Delete': 'Удалить', 'Open': 'Открыть', 'Save changes': 'Сохранить изменения',
+            'Add athlete': 'Добавить участника', 'Edit athlete': 'Изменить участника', 'Register athlete': 'Регистрация участника',
+            'Full name': 'Полное имя', 'Gender / division': 'Пол / дивизион', 'e.g. Men, Women, Junior': 'Например: мужчины, женщины, юниоры',
+            'Select at least one competing hand.': 'Выберите хотя бы одну соревновательную руку.', 'Athlete saved.': 'Данные участника сохранены.',
+            'Delete athlete?': 'Удалить участника?', 'Athlete deleted.': 'Участник удалён.',
+            'Edit category': 'Изменить категорию', 'Create category': 'Создать категорию', 'Men - 75 kg': 'Мужчины — 75 кг',
+            'e.g. 75': 'Например, 75', 'Category saved.': 'Категория сохранена.', 'Both hands': 'Обе руки',
+            'No limit': 'Без ограничения', 'Delete category?': 'Удалить категорию?', 'Category deleted.': 'Категория удалена.',
+            'Record weigh-in': 'Записать результат взвешивания', 'Enter a valid weight.': 'Введите корректный вес.',
+            'Save weight': 'Сохранить вес', 'Create at least one category first.': 'Сначала создайте хотя бы одну категорию.',
+            'Brackets generated. Review matchups before starting.': 'Сетка создана. Проверьте пары перед началом турнира.',
+            'Regenerate brackets?': 'Пересоздать сетку?', 'Regenerate': 'Пересоздать',
+            'PAUSED': 'ПАУЗА', 'BYE': 'ПРОПУСК', 'FINISHED': 'ЗАВЕРШЁН', 'BYE / TBD': 'ПРОПУСК / НЕ ОПРЕДЕЛЕНО',
+            'Paused': 'На паузе', 'Live': 'Идёт', 'Available': 'Свободен', ' queued': ' в очереди',
+            'No matches in the queue.': 'В очереди нет поединков.', 'Assign table': 'Назначить стол',
+            'Invalid table number.': 'Неверный номер стола.', 'Assign': 'Назначить',
+            'Assigned to Table': 'Назначено на стол', 'Confirm the referee\'s decision before advancing an athlete.': 'Подтвердите решение судьи перед переводом участника в следующий раунд.',
+            'Confirm': 'Подтвердить', 'Confirm match result': 'Подтвердить результат поединка',
+            'advances to the next round. Confirm the referee\'s decision?': 'проходит в следующий раунд. Подтвердить решение судьи?',
+            'Confirm winner': 'Подтвердить победителя', 'Both athletes must be assigned before recording a winner.': 'Для фиксации победителя должны быть назначены оба участника.',
+            'Resume match': 'Продолжить поединок', 'Dispute / pause match': 'Спор / приостановить поединок',
+            'Match paused.': 'Поединок приостановлен.', 'Match resumed.': 'Поединок возобновлён.',
+            'Completed': 'Завершён', 'No athletes registered.': 'Участники не зарегистрированы.',
+            'No results recorded yet.': 'Результаты ещё не записаны.', 'Tournament settings saved.': 'Настройки турнира сохранены.',
+            'Cancel': 'Отмена', 'Save': 'Сохранить', 'Delete': 'Удалить', 'Reading ': 'Чтение файла ',
+            'Import complete.': 'Импорт завершён.', 'Could not read this file. Check its format and column headers.': 'Не удалось прочитать файл. Проверьте его формат и заголовки столбцов.',
+            'Invalid backup file.': 'Некорректный файл резервной копии.', 'Restore backup?': 'Восстановить резервную копию?',
+            'Replace current local tournament data with this backup?': 'Заменить текущие локальные данные турнира этой резервной копией?',
+            'Backup restored.': 'Резервная копия восстановлена.', 'Restore': 'Восстановить',
+            'Reset all tournament data?': 'Сбросить все данные турнира?',
+            'This permanently deletes all GripDesk data saved in this browser. Export a backup first if you need to keep your records.': 'Это навсегда удалит все данные GripDesk, сохранённые в этом браузере. Если записи нужны, сначала экспортируйте резервную копию.',
+            'Local data reset.': 'Локальные данные сброшены.', 'Reset everything': 'Сбросить всё',
+            'TBD': 'Не определено', 'Unassigned': 'Не назначено', 'LEFT': 'ЛЕВАЯ', 'RIGHT': 'ПРАВАЯ',
+            'pending': 'ожидает', 'passed': 'пройдено', 'failed': 'не пройдено', '✓ Complete': '✓ Выполнено',
+            '○ Pending': '○ Ожидает', 'Ready': 'Готово', 'Setup': 'Настройка', ' won': ' — победа',
+            ' kg': ' кг', 'Table ': 'Стол ', 'No limit': 'Без ограничения',
+            'Arm Wrestling Tournament': 'Турнир по армрестлингу', 'Import participant list': 'Импорт списка участников'
+        };
+
+        const reverseTranslations = Object.fromEntries(
+            Object.entries(translations).map(([english, russian]) => [russian, english])
+        );
+
+        function translateValue(value, language) {
+            if (language === 'ru') {
+                if (translations[value] !== undefined) return translations[value];
+                for (const [english, russian] of Object.entries(translations)) {
+                    if (english.endsWith(' ') && value.startsWith(english)) return russian + value.slice(english.length);
+                    if (value.endsWith(' ' + english)) return value.slice(0, -english.length) + russian;
+                }
+            } else {
+                if (reverseTranslations[value] !== undefined) return reverseTranslations[value];
+                for (const [russian, english] of Object.entries(reverseTranslations)) {
+                    if (russian.endsWith(' ') && value.startsWith(russian)) return english + value.slice(russian.length);
+                    if (value.endsWith(' ' + russian)) return value.slice(0, -russian.length) + english;
+                }
+            }
+            return value;
+        }
+
+        function translateNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const original = node.nodeValue;
+                const trimmed = original.trim();
+                if (!trimmed) return;
+                const translated = translateValue(trimmed, currentLanguage);
+                if (translated !== trimmed) {
+                    const start = original.match(/^\s*/)[0];
+                    const end = original.match(/\s*$/)[0];
+                    node.nodeValue = start + translated + end;
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                ['placeholder', 'title', 'aria-label'].forEach(attribute => {
+                    if (node.hasAttribute(attribute)) {
+                        const oldValue = node.getAttribute(attribute);
+                        node.setAttribute(attribute, translateValue(oldValue, currentLanguage));
+                    }
+                });
+                node.childNodes.forEach(translateNode);
+            }
+        }
+
+        function setLanguage(language) {
+            currentLanguage = language === 'en' ? 'en' : 'ru';
+            localStorage.setItem(LANGUAGE_KEY, currentLanguage);
+            document.documentElement.lang = currentLanguage;
+            const selector = document.getElementById('languageSelect');
+            if (selector) selector.value = currentLanguage;
+            translateNode(document.body);
+            // Re-render generated interface text in the selected language.
+            renderAll();
+            translateNode(document.body);
+        }
+
+        const languageObserver = new MutationObserver(records => {
+            records.forEach(record => {
+                if (record.type === 'childList') record.addedNodes.forEach(translateNode);
+                else if (record.type === 'characterData') translateNode(record.target);
+            });
+        });
+        languageObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+
         const STORE_KEY = 'gripdesk_v1';
 
         const defaults = {
@@ -972,9 +1172,9 @@
             ];
 
             document.getElementById('setupChecklist').innerHTML = checks.map(([title, complete]) => `
-            <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-300">${title}</span>
-                <span class="${complete ? 'text-emerald-400' : 'text-muted'}">
+            <div class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 text-sm">
+                <span class="font-medium text-slate-200">${title}</span>
+                <span class="${complete ? 'text-emerald-300' : 'text-slate-300'} text-[11px] font-semibold uppercase tracking-widest tabular-nums">
                     ${complete ? '✓ Complete' : '○ Pending'}
                 </span>
             </div>
@@ -2264,7 +2464,11 @@
         }
 
         updateHeader();
+        const languageSelector = document.getElementById('languageSelect');
+        if (languageSelector) languageSelector.value = currentLanguage;
+        document.documentElement.lang = currentLanguage;
         renderAll();
+        translateNode(document.body);
     </script>
 
 </body>
