@@ -889,9 +889,9 @@
             'Tournament status': 'Статус турнира', 'Setup': 'Настройка', 'Configure tournament →': 'Настроить турнир →',
             'Recent matches': 'Последние поединки', 'Latest recorded results': 'Последние записанные результаты',
             'All results →': 'Все результаты →', 'No match results yet.': 'Пока нет результатов поединков.',
-            'People': 'Участники', 'One profile per athlete, with independent left/right registrations.': 'Один профиль на участника с отдельной регистрацией левой и правой руки.',
+            'People': 'Люди', 'One profile per athlete, with independent left/right registrations.': 'Один профиль на участника с отдельной регистрацией левой и правой руки.',
             '⇧ Import list': '⇧ Импортировать список', '＋ Add athlete': '＋ Добавить участника',
-            'Search athlete, club or ID...': 'Поиск участника, клуба или ID...', 'All hands': 'Обе руки',
+            'Search athlete, club or ID...': 'Поиск участника, клуба или ID...', 'All hands': 'Все руки',
             'Left hand': 'Левая рука', 'Right hand': 'Правая рука', 'Both hands': 'Обе руки',
             'Athlete': 'Участник', 'Club / team': 'Клуб / команда', 'Weight': 'Вес', 'Hands': 'Руки',
             'Weigh-in': 'Взвешивание', 'Actions': 'Действия',
@@ -971,28 +971,153 @@
             'pending': 'ожидает', 'passed': 'пройдено', 'failed': 'не пройдено', '✓ Complete': '✓ Выполнено',
             '○ Pending': '○ Ожидает', 'Ready': 'Готово', 'Setup': 'Настройка', ' won': ' — победа',
             ' kg': ' кг', 'Table ': 'Стол ', 'No limit': 'Без ограничения',
-            'Arm Wrestling Tournament': 'Турнир по армрестлингу', 'Import participant list': 'Импорт списка участников'
+            'Arm Wrestling Tournament': 'Турнир по армрестлингу', 'Import participant list': 'Импорт списка участников',
+
+            // --- Additional strings (previously untranslated) ---
+            'Language': 'Язык', 'Local Championship 2026': 'Местный чемпионат 2026',
+            'Athletes registered': 'Участники зарегистрированы', 'Categories created': 'Категории созданы',
+            'Weigh-in completed': 'Взвешивание проведено', 'Brackets generated': 'Сетка создана',
+            'vs': 'против',
+            'Weight (kg)': 'Вес (кг)', 'Not assigned': 'Не назначена', 'Weigh-in status': 'Статус взвешивания',
+            'Passed': 'Пройдено',
+            'Category name': 'Название категории', 'Hand': 'Рука', 'Left': 'Левая', 'Right': 'Правая', 'Both': 'Обе',
+            'Division': 'Дивизион', 'Maximum weight (kg)': 'Максимальный вес (кг)', 'Allowance (kg)': 'Допуск (кг)',
+            'Assigned table': 'Назначенный стол', 'Save category': 'Сохранить категорию',
+            'Weight limit': 'Лимит веса', 'Allowance': 'Допуск',
+            'left hand': 'левая рука', 'right hand': 'правая рука',
+            'No categories created yet.': 'Категории ещё не созданы.',
+            'Record weight': 'Записать вес', 'Single elimination': 'Олимпийская система',
+            'Manage →': 'Управлять →', 'Manage match': 'Управлять поединком',
+            'No active match assigned.': 'Нет назначенного активного поединка.',
+            'No brackets generated yet. Add athletes, verify weigh-in, then generate brackets.': 'Сетка ещё не создана. Добавьте участников, проведите взвешивание и создайте сетку.',
+            'No brackets for this category.': 'Для этой категории нет сетки.',
+            'RED': 'КРАСНЫЙ', 'BLUE': 'СИНИЙ', 'READY': 'ГОТОВ', 'LIVE': 'ИДЁТ',
+            'ready': 'готов', 'live': 'идёт', 'paused': 'на паузе', 'completed': 'завершён', 'bye': 'пропуск',
+            'RED · FIRST CALLED': 'КРАСНЫЙ · ВЫЗВАН ПЕРВЫМ', 'BLUE · SECOND CALLED': 'СИНИЙ · ВЫЗВАН ВТОРЫМ',
+            'Close': 'Закрыть',
+            'Some matches have started or finished. Regenerating will erase all current bracket matches. Continue?': 'Некоторые поединки уже начались или завершились. При пересоздании сетки все текущие поединки будут удалены. Продолжить?'
+        };
+
+        // Dynamic strings that contain values (names, numbers). {n} = number, {x}/{a}/{b} = any text.
+        const patternPairs = [
+            ['Round {n}', 'Раунд {n}'],
+            ['Match {n}', 'Поединок {n}'],
+            ['{x} kg', '{x} кг'],
+            ['{n} matches', 'Поединков: {n}'],
+            ['{n} queued', 'В очереди: {n}'],
+            ['{n} assigned athletes', 'Назначено участников: {n}'],
+            ['{x} won', 'Победа: {x}'],
+            ['{x} advances!', '{x} проходит дальше!'],
+            ["{x} advances to the next round. Confirm the referee's decision?", '{x} проходит в следующий раунд. Подтвердить решение судьи?'],
+            ['Confirm {x} as winner', 'Подтвердить победителя: {x}'],
+            ["Assigned to Table {n}. Confirm the referee's decision before advancing an athlete.", 'Назначено на стол {n}. Подтвердите решение судьи перед переводом участника в следующий раунд.'],
+            ['Match assigned to Table {n}.', 'Поединок назначен на стол {n}.'],
+            ['Assign {a} vs {b} to a table (1-{n}):', 'Назначьте поединок {a} против {b} на стол (1–{n}):'],
+            ['Enter actual weigh-in weight for {x} (kg):', 'Введите фактический вес участника {x} при взвешивании (кг):'],
+            ['Weigh-in updated: {x}', 'Взвешивание обновлено: {x}'],
+            ['Are you sure you want to delete {x}? Existing match records may show TBD.', 'Вы уверены, что хотите удалить участника {x}? В существующих записях поединков вместо него будет отображаться «Не определено».'],
+            ['Are you sure you want to delete "{x}"? Athletes assigned to it will become unassigned.', 'Вы уверены, что хотите удалить категорию «{x}»? Участники из неё станут неназначенными.'],
+            ['✓ Imported {n} athlete(s) from {x}.', '✓ Импортировано участников: {n}. Файл: {x}.']
+        ];
+
+        // Words that need a different translation inside "a · b" lines than on their own.
+        const segmentTranslations = { 'Open': 'Открытая' };
+
+        // Words that need a different translation inside a specific element (data-i18n-ctx).
+        const contextTranslations = { 'weight-limit': { 'Open': 'Без ограничения' } };
+
+        const documentTitles = {
+            ru: 'GripDesk — Менеджер турниров по армрестлингу',
+            en: 'GripDesk — Arm Wrestling Tournament Manager'
         };
 
         const reverseTranslations = Object.fromEntries(
             Object.entries(translations).map(([english, russian]) => [russian, english])
         );
 
-        function translateValue(value, language) {
+        function compileTemplate(template) {
+            const names = [];
+            const source = template
+                .replace(/[.*+?^$()|[\]\\]/g, '\\$&')
+                .replace(/\{(\w+)\}/g, (_, name) => {
+                    names.push(name);
+                    return name === 'n' ? '(\\d+)' : '(.+?)';
+                });
+            return { regex: new RegExp('^' + source + '$', 's'), names };
+        }
+
+        const compiledPatterns = patternPairs.map(([english, russian]) => ({
+            en: compileTemplate(english),
+            ru: compileTemplate(russian),
+            enTemplate: english,
+            ruTemplate: russian
+        }));
+
+        function translatePattern(value, language) {
+            for (const pattern of compiledPatterns) {
+                const from = language === 'ru' ? pattern.en : pattern.ru;
+                const toTemplate = language === 'ru' ? pattern.ruTemplate : pattern.enTemplate;
+                const match = value.match(from.regex);
+                if (!match) continue;
+
+                const values = {};
+                from.names.forEach((name, index) => {
+                    values[name] = translateValue(match[index + 1], language);
+                });
+                return toTemplate.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
+            }
+            return null;
+        }
+
+        function translateSegment(part, language) {
             if (language === 'ru') {
-                if (translations[value] !== undefined) return translations[value];
-                for (const [english, russian] of Object.entries(translations)) {
-                    if (english.endsWith(' ') && value.startsWith(english)) return russian + value.slice(english.length);
-                    if (value.endsWith(' ' + english)) return value.slice(0, -english.length) + russian;
-                }
+                if (Object.hasOwn(segmentTranslations, part)) return segmentTranslations[part];
             } else {
-                if (reverseTranslations[value] !== undefined) return reverseTranslations[value];
-                for (const [russian, english] of Object.entries(reverseTranslations)) {
-                    if (russian.endsWith(' ') && value.startsWith(russian)) return english + value.slice(russian.length);
-                    if (value.endsWith(' ' + russian)) return value.slice(0, -russian.length) + english;
+                const key = Object.keys(segmentTranslations).find(k => segmentTranslations[k] === part);
+                if (key) return key;
+            }
+            return translateValue(part, language);
+        }
+
+        function translateValue(value, language) {
+            const dictionary = language === 'ru' ? translations : reverseTranslations;
+
+            if (Object.hasOwn(dictionary, value)) return dictionary[value];
+
+            const patternResult = translatePattern(value, language);
+            if (patternResult !== null) return patternResult;
+
+            // Lines such as "Open · Both hands" or "Match 1 · Round 2" are translated part by part.
+            if (value.includes(' · ')) {
+                const joined = value.split(' · ').map(part => translateSegment(part, language)).join(' · ');
+                if (joined !== value) return joined;
+            }
+
+            for (const [from, to] of Object.entries(dictionary)) {
+                if (from.endsWith(' ') && value.startsWith(from)) {
+                    return to + value.slice(from.length);
+                }
+
+                // Labels with a leading icon, e.g. "♙ Athletes".
+                if (value.endsWith(' ' + from)) {
+                    const prefix = value.slice(0, value.length - from.length);
+                    if (!/[\p{L}\p{N}]/u.test(prefix)) return prefix + to;
                 }
             }
+
             return value;
+        }
+
+        function translateValueInContext(value, language, context) {
+            const map = context ? contextTranslations[context] : null;
+            if (map) {
+                if (language === 'ru' && Object.hasOwn(map, value)) return map[value];
+                if (language === 'en') {
+                    const key = Object.keys(map).find(k => map[k] === value);
+                    if (key) return key;
+                }
+            }
+            return translateValue(value, language);
         }
 
         function translateNode(node) {
@@ -1000,7 +1125,8 @@
                 const original = node.nodeValue;
                 const trimmed = original.trim();
                 if (!trimmed) return;
-                const translated = translateValue(trimmed, currentLanguage);
+                const context = node.parentElement?.dataset?.i18nCtx;
+                const translated = translateValueInContext(trimmed, currentLanguage, context);
                 if (translated !== trimmed) {
                     const start = original.match(/^\s*/)[0];
                     const end = original.match(/\s*$/)[0];
@@ -1017,10 +1143,15 @@
             }
         }
 
+        function applyDocumentTitle() {
+            document.title = documentTitles[currentLanguage];
+        }
+
         function setLanguage(language) {
             currentLanguage = language === 'en' ? 'en' : 'ru';
             localStorage.setItem(LANGUAGE_KEY, currentLanguage);
             document.documentElement.lang = currentLanguage;
+            applyDocumentTitle();
             const selector = document.getElementById('languageSelect');
             if (selector) selector.value = currentLanguage;
             translateNode(document.body);
@@ -1484,7 +1615,7 @@
 
                     <div class="mt-4 text-sm flex justify-between">
                         <span class="text-muted">Weight limit</span>
-                        <b>${c.maxWeight ?? 'Open'} ${c.maxWeight ? 'kg' : ''}</b>
+                        <b data-i18n-ctx="weight-limit">${c.maxWeight ?? 'Open'} ${c.maxWeight ? 'kg' : ''}</b>
                     </div>
 
                     <div class="text-sm flex justify-between mt-2">
@@ -2467,6 +2598,7 @@
         const languageSelector = document.getElementById('languageSelect');
         if (languageSelector) languageSelector.value = currentLanguage;
         document.documentElement.lang = currentLanguage;
+        applyDocumentTitle();
         renderAll();
         translateNode(document.body);
     </script>
